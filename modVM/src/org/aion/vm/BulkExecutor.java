@@ -24,7 +24,6 @@ import org.aion.mcf.vm.types.Log;
 import org.aion.precompiled.ContractFactory;
 import org.aion.types.Address;
 import org.aion.util.bytes.ByteUtil;
-import org.aion.vm.VmFactoryImplementation.VM;
 import org.aion.vm.api.interfaces.IExecutionLog;
 import org.aion.vm.api.interfaces.KernelInterface;
 import org.aion.vm.api.interfaces.ResultCode;
@@ -197,12 +196,10 @@ public class BulkExecutor {
                                     block.getTimestamp(),
                                     block.getNrgLimit(),
                                     block.getCoinbase());
-                    virtualMachineForNextBatch =
-                            VirtualMachineProvider.getVirtualMachineInstance(VM.AVM, vmKernel);
                     nextBatchToExecute =
                             fetchNextBatchOfTransactionsForAionVirtualMachine(currentIndex);
 
-                    summaries.addAll(executeTransactionsUsingAvm(virtualMachineForNextBatch, nextBatchToExecute, vmKernel));
+                    summaries.addAll(executeTransactionsUsingAvm(nextBatchToExecute, vmKernel));
                     currentIndex += nextBatchToExecute.size();
                 } else {
                     vmKernel =
@@ -232,8 +229,10 @@ public class BulkExecutor {
         }
     }
 
-    private List<AionTxExecSummary> executeTransactionsUsingAvm(VirtualMachine virtualMachine, ExecutionBatch details, KernelInterface kernel) throws VMException {
+    private List<AionTxExecSummary> executeTransactionsUsingAvm(ExecutionBatch details, KernelInterface kernel) throws VMException {
         List<AionTxExecSummary> summaries = new ArrayList<>();
+
+        AionVirtualMachine virtualMachine = LongLivedAvm.singleton();
 
         // Run the transactions.
         Transaction[] txArray = new Transaction[details.size()];
