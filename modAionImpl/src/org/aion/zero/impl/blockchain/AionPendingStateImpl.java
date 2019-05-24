@@ -1087,6 +1087,7 @@ public class AionPendingStateImpl implements IPendingStateInternal<AionBlock, Ai
                         !inPool,
                         bestBlk.getNrgLimit(),
                         fork040Enable,
+                        false,
                         LOGGER_VM);
         try {
             return txExe.execute().get(0);
