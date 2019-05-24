@@ -19,6 +19,7 @@ import org.aion.types.Address;
 import org.aion.types.ByteArrayWrapper;
 import org.aion.util.bytes.ByteUtil;
 import org.aion.vm.BulkExecutor;
+import org.aion.vm.BulkExecutorBuilder;
 import org.aion.vm.ExecutionBatch;
 import org.aion.vm.exception.VMException;
 import org.aion.zero.impl.AionHub;
@@ -130,16 +131,15 @@ public class AionImpl implements IAionChain {
 
         try {
             ExecutionBatch details = new ExecutionBatch(block, Collections.singletonList(tx));
-            BulkExecutor executor =
-                    BulkExecutor.newExecutorWithNoPostExecutionWork(
-                            details,
-                            repository,
-                            true,
-                            true,
-                            block.getNrgLimit(),
-                            false,
-                            false,
-                            LOG_VM);
+            BulkExecutor executor = new BulkExecutorBuilder()
+                .transactionBatchToExecute(details)
+                .repository(repository)
+                .isLocalCall(true)
+                .allowNonceIncrement(true)
+                .isFork040enabled(false)
+                .checkBlockEnergyLimit(false)
+                .logger(LOG_VM)
+                .build();
             return executor.execute().get(0).getReceipt().getEnergyUsed();
         } catch (VMException e) {
             LOG_GEN.error("Shutdown due to a VM fatal error.", e);
@@ -162,16 +162,15 @@ public class AionImpl implements IAionChain {
 
         try {
             ExecutionBatch details = new ExecutionBatch(block, Collections.singletonList(tx));
-            BulkExecutor executor =
-                    BulkExecutor.newExecutorWithNoPostExecutionWork(
-                            details,
-                            repository,
-                            true,
-                            true,
-                            block.getNrgLimit(),
-                            false,
-                            false,
-                            LOG_VM);
+            BulkExecutor executor = new BulkExecutorBuilder()
+                .transactionBatchToExecute(details)
+                .repository(repository)
+                .isLocalCall(true)
+                .allowNonceIncrement(true)
+                .isFork040enabled(false)
+                .checkBlockEnergyLimit(false)
+                .logger(LOG_VM)
+                .build();
             return executor.execute().get(0).getReceipt();
         } catch (VMException e) {
             LOG_GEN.error("Shutdown due to a VM fatal error.", e);
