@@ -20,7 +20,6 @@ import org.aion.types.ByteArrayWrapper;
 import org.aion.util.bytes.ByteUtil;
 import org.aion.vm.BulkExecutor;
 import org.aion.vm.BulkExecutorBuilder;
-import org.aion.vm.ExecutionBatch;
 import org.aion.vm.exception.VMException;
 import org.aion.zero.impl.AionHub;
 import org.aion.zero.impl.config.CfgAion;
@@ -130,9 +129,8 @@ public class AionImpl implements IAionChain {
                 aionHub.getRepository().getSnapshotTo(block.getStateRoot()).startTracking();
 
         try {
-            ExecutionBatch details = new ExecutionBatch(block, Collections.singletonList(tx));
             BulkExecutor executor = new BulkExecutorBuilder()
-                .transactionBatchToExecute(details)
+                .transactionsToExecute(block, Collections.singletonList(tx))
                 .repository(repository)
                 .isLocalCall(true)
                 .allowNonceIncrement(true)
@@ -161,9 +159,8 @@ public class AionImpl implements IAionChain {
                 aionHub.getRepository().getSnapshotTo(block.getStateRoot()).startTracking();
 
         try {
-            ExecutionBatch details = new ExecutionBatch(block, Collections.singletonList(tx));
             BulkExecutor executor = new BulkExecutorBuilder()
-                .transactionBatchToExecute(details)
+                .transactionsToExecute(block, Collections.singletonList(tx))
                 .repository(repository)
                 .isLocalCall(true)
                 .allowNonceIncrement(true)
