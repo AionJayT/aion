@@ -481,7 +481,8 @@ public class TxPoolA0<TX extends Transaction> extends AbstractTxPool<TX> impleme
                         Transaction itx = this.getMainMap().get(bw).getTx();
 
                         cnt_txSz += itx.getEncoded().length;
-                        cnt_nrg += itx.getNrgConsume();
+                        // TODO: AKI-159 Workaround for the nrg refund case. Require to fix it in the feature.
+                        cnt_nrg += itx.getNrgConsume() < MIN_ENERGY_CONSUME ? MIN_ENERGY_CONSUME : itx.getNrgConsume();
                         if (LOG.isTraceEnabled()) {
                             LOG.trace(
                                     "from:[{}] nonce:[{}] txSize: txSize[{}] nrgConsume[{}]",
@@ -528,7 +529,9 @@ public class TxPoolA0<TX extends Transaction> extends AbstractTxPool<TX> impleme
                             Transaction itx = this.getMainMap().get(bw).getTx();
 
                             cnt_txSz += itx.getEncoded().length;
-                            cnt_nrg += itx.getNrgConsume();
+
+                            // TODO: AKI-159 Workaround for the nrg refund case. Require to fix it in the feature.
+                            cnt_nrg += itx.getNrgConsume() < MIN_ENERGY_CONSUME ? MIN_ENERGY_CONSUME : itx.getNrgConsume();
                             if (LOG.isTraceEnabled()) {
                                 LOG.trace(
                                         "from:[{}] nonce:[{}] txSize: txSize[{}] nrgConsume[{}]",

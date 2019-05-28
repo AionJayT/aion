@@ -47,6 +47,7 @@ public abstract class AbstractTxPool<TX extends Transaction> {
     protected final int BLK_NRG_MIN = 1_000_000;
     protected final int SEQ_TX_MAX = 25;
     protected final int SEQ_TX_MIN = 5;
+    protected final static long MIN_ENERGY_CONSUME = 21_000L;
     /**
      * mainMap : Map<ByteArrayWrapper, TXState> @ByteArrayWrapper transaction hash @TXState
      * transaction data and sort status
@@ -175,9 +176,11 @@ public abstract class AbstractTxPool<TX extends Transaction> {
                                 // considering refactor later
                                 BigInteger nonce = tx.getNonceBI();
 
+                                // TODO: AKI-159 Workaround for the nrg refund case. Require to fix it in the feature.
+                                long nrgConsume = tx.getNrgConsume() < MIN_ENERGY_CONSUME ? MIN_ENERGY_CONSUME : tx.getNrgConsume();
                                 BigInteger nrgCharge =
                                         BigInteger.valueOf(tx.getEnergyPrice())
-                                                .multiply(BigInteger.valueOf(tx.getNrgConsume()));
+                                                .multiply(BigInteger.valueOf(nrgConsume));
 
                                 if (LOG.isTraceEnabled()) {
                                     LOG.trace(
