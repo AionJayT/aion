@@ -47,7 +47,6 @@ import org.aion.types.Address;
 import org.aion.util.bytes.ByteUtil;
 import org.aion.util.conversions.Hex;
 import org.aion.vm.BulkExecutor;
-import org.aion.vm.BulkExecutorBuilder;
 import org.aion.vm.exception.VMException;
 import org.aion.zero.impl.AionBlockchainImpl;
 import org.aion.zero.impl.config.CfgAion;
@@ -1078,17 +1077,21 @@ public class AionPendingStateImpl implements IPendingStateInternal<AionBlock, Ai
             fork040Enable = bestBlk.getNumber() >= fork040Block;
         }
 
-        BulkExecutor txExe = new BulkExecutorBuilder()
-            .transactionsToExecute(bestBlk, Collections.singletonList(tx))
-            .repository(pendingState)
-            .isLocalCall(false)
-            .allowNonceIncrement(!inPool)
-            .isFork040enabled(fork040Enable)
-            .checkBlockEnergyLimit(false)
-            .logger(LOGGER_VM)
-            .build();
         try {
-            return txExe.execute().get(0);
+            // Booleans moved out here so their meaning is explicit.
+            boolean isLocalCall = false;
+            boolean incrementSenderNonce = !inPool;
+            boolean checkBlockEnergyLimit = false;
+
+            return BulkExecutor.executeTransactionWithNoPostExecutionWork(
+                bestBlk,
+                tx,
+                pendingState,
+                isLocalCall,
+                incrementSenderNonce,
+                fork040Enable,
+                checkBlockEnergyLimit,
+                LOGGER_VM);
         } catch (VMException e) {
             LOGGER_VM.error("Shutdown due to a VM fatal error.", e);
             System.exit(-1);

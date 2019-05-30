@@ -60,7 +60,6 @@ import org.aion.types.Hash256;
 import org.aion.util.bytes.ByteUtil;
 import org.aion.util.conversions.Hex;
 import org.aion.vm.BulkExecutor;
-import org.aion.vm.BulkExecutorBuilder;
 import org.aion.vm.PostExecutionLogic;
 import org.aion.vm.PostExecutionWork;
 import org.aion.vm.api.interfaces.IBloomFilter;
@@ -1301,31 +1300,32 @@ public class AionBlockchainImpl implements IAionBlockchain {
                 TransactionTypeRule.allowAVMContractTransaction();
             }
 
-            BulkExecutor executor = new BulkExecutorBuilder()
-                .blockToExecute(block)
-                .repository(track)
-                .isLocalCall(false)
-                .allowNonceIncrement(true)
-                .isFork040enabled(fork040Enable)
-                .checkBlockEnergyLimit(true)
-                .logger(LOGGER_VM)
-                .postExecutionWork(getPostExecutionWorkForGeneratePreBlock(repository))
-                .build();
-
-            List<AionTxExecSummary> executionSummaries = null;
             try {
-                executionSummaries = executor.execute();
+                // Booleans moved out here so their meaning is explicit.
+                boolean isLocalCall = false;
+                boolean incrementSenderNonce = true;
+                boolean checkBlockEnergyLimit = true;
+
+                List<AionTxExecSummary> executionSummaries = BulkExecutor.executeAllTransactionsInBlock(
+                    block,
+                    track,
+                    isLocalCall,
+                    incrementSenderNonce,
+                    fork040Enable,
+                    checkBlockEnergyLimit,
+                    LOGGER_VM,
+                    getPostExecutionWorkForGeneratePreBlock(repository));
+
+                for (AionTxExecSummary summary : executionSummaries) {
+                    if (!summary.isRejected()) {
+                        transactions.add(summary.getTransaction());
+                        receipts.add(summary.getReceipt());
+                        summaries.add(summary);
+                    }
+                }
             } catch (VMException e) {
                 LOG.error("Shutdown due to a VM fatal error.", e);
                 System.exit(-1);
-            }
-
-            for (AionTxExecSummary summary : executionSummaries) {
-                if (!summary.isRejected()) {
-                    transactions.add(summary.getTransaction());
-                    receipts.add(summary.getReceipt());
-                    summaries.add(summary);
-                }
             }
         }
 
@@ -1352,28 +1352,29 @@ public class AionBlockchainImpl implements IAionBlockchain {
                 TransactionTypeRule.allowAVMContractTransaction();
             }
 
-            BulkExecutor executor = new BulkExecutorBuilder()
-                .blockToExecute(block)
-                .repository(track)
-                .isLocalCall(false)
-                .allowNonceIncrement(true)
-                .isFork040enabled(fork040Enable)
-                .checkBlockEnergyLimit(false)
-                .logger(LOGGER_VM)
-                .postExecutionWork(getPostExecutionWorkForApplyBlock(repository))
-                .build();
-
-            List<AionTxExecSummary> executionSummaries = null;
             try {
-                executionSummaries = executor.execute();
+                // Booleans moved out here so their meaning is explicit.
+                boolean isLocalCall = false;
+                boolean incrementSenderNonce = true;
+                boolean checkBlockEnergyLimit = false;
+
+                List<AionTxExecSummary> executionSummaries = BulkExecutor.executeAllTransactionsInBlock(
+                    block,
+                    track,
+                    isLocalCall,
+                    incrementSenderNonce,
+                    fork040Enable,
+                    checkBlockEnergyLimit,
+                    LOGGER_VM,
+                    getPostExecutionWorkForApplyBlock(repository));
+
+                for (AionTxExecSummary summary : executionSummaries) {
+                    receipts.add(summary.getReceipt());
+                    summaries.add(summary);
+                }
             } catch (VMException e) {
                 LOG.error("Shutdown due to a VM fatal error.", e);
                 System.exit(-1);
-            }
-
-            for (AionTxExecSummary summary : executionSummaries) {
-                receipts.add(summary.getReceipt());
-                summaries.add(summary);
             }
         }
         Map<Address, BigInteger> rewards = addReward(block);
