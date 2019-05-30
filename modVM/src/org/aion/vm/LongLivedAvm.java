@@ -42,7 +42,9 @@ public final class LongLivedAvm {
      */
     public static void destroy() {
         if (aionVirtualMachine != null) {
+            aionVirtualMachine.acquireAvmLock();
             aionVirtualMachine.shutdown();
+            aionVirtualMachine.releaseAvmLock();
             aionVirtualMachine = null;
         }
     }

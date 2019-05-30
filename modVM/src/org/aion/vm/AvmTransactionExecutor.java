@@ -72,9 +72,11 @@ public final class AvmTransactionExecutor {
 
         long blockRemainingEnergy = initialBlockEnergyLimit;
 
-        // Run the transactions.
         AionVirtualMachine avm = LongLivedAvm.singleton();
         KernelInterface kernel = newKernelInterface(repository.startTracking(), block, allowNonceIncrement, isLocalCall);
+
+        // Acquire the avm lock and then run the transactions.
+        avm.acquireAvmLock();
         SimpleFuture<TransactionResult>[] resultsAsFutures = avm.run(kernel, transactions);
 
         // Process the results of the transactions.
@@ -83,6 +85,7 @@ public final class AvmTransactionExecutor {
             TransactionResult result = resultAsFuture.get();
 
             if (result.getResultCode().isFatal()) {
+                avm.releaseAvmLock();
                 throw new VMException(result.toString());
             }
 
@@ -119,6 +122,9 @@ public final class AvmTransactionExecutor {
             transactionSummaries.add(summary);
             index++;
         }
+
+        // Release the avm lock now that all of the results have been collected and we know the avm is finished running all transactions.
+        avm.releaseAvmLock();
 
         return transactionSummaries;
     }
